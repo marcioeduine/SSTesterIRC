@@ -1,85 +1,78 @@
 #include <iostream>
-#include <string>
 #include <vector>
 #include <cstdlib>
 
-void ss_git_push(void)
+typedef std::string	t_text;
+
+void	ss_git_push(void)
 {
-    // git add .
-    system("git add .");
-    
-    // git diff --name-only --cached
-    FILE* pipe = popen("git diff --name-only --cached", "r");
-    if (!pipe) return;
-    
-    std::vector<std::string> files;
-    char buffer[1024];
-    std::string file_content;
-    
-    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
-        std::string line = buffer;
-        // Remove trailing newline
-        if (!line.empty() && line[line.size()-1] == '\n') {
-            line.erase(line.size()-1);
-        }
-        files.push_back(line);
+	FILE				*file;
+	FILE				*current_file;
+	char				buffer[1024];
+	char				line_buffer[1024];
+	std::vector<t_text>	file_container;
+	std::vector<t_text>	commit_container;
+	const t_text		ss_commit[2] = {"// SS_COMMIT:", "#// SS_COMMIT:"};
+	t_text				message("UPDATED FILE:\n");
+	t_text				commit;
+	t_text				line;
+	size_t				position;
+	size_t				i;
+	size_t				j;
+
+	(system("git add ."), file = popen("git diff --name-only --cached", "r"));
+    if (not file)
+    	return ;
+	while (fgets(buffer, sizeof(buffer), file))
+	{
+		line = buffer;
+		if (not line.empty() and line[line.size()-1] == '\n')
+			line.erase(line.size()-1);
+		file_container.push_back(line);
+	}
+	if ((pclose(file), not file_container.empty()))
+	{
+		i = -1;
+		while (++i < file_container.size())
+		{
+			current_file = fopen(file_container[i].c_str(), "r");
+			if (current_file)
+			{
+				while (fgets(line_buffer, sizeof(line_buffer), current_file))
+				{
+					(line.clear(), line = line_buffer);
+					if (not line.empty() and line[line.size()-1] == '\n')
+						line.erase(line.size()-1);
+					position = line.find(ss_commit[0]);
+                    if (position == t_text::npos)
+                        position = line.find(ss_commit[1]);
+                    if (position xor t_text::npos)
+                    {
+						commit = line.substr(position + 13);
+						position = commit.find_first_not_of(" \t");
+						if (position xor t_text::npos)
+						{
+							commit = commit.substr(position);
+							commit_container.push_back(commit);
+						}
+					}
+				}
+				if ((fclose(current_file), not commit_container.empty()))
+				{
+					message += "\n\n - " + file_container[i] + ":";
+					j = -1;
+					while (++j < commit_container.size())
+						message += "\n   • " + commit_container[j];
+				}
+				else
+					message += "\n - " + file_container[i];
+			}
+		}
+		system(t_text("git commit -m \"" + message + "\"").c_str());
+		system("git push");
     }
-    pclose(pipe);
-    
-    if (!files.empty()) {
-        std::string msg = "UPDATED FILE:\n";
-        
-        for (size_t i = 0; i < files.size(); ++i) {
-            // Check for SS_COMMIT comments
-            FILE* f = fopen(files[i].c_str(), "r");
-            if (f) {
-                std::vector<std::string> comments;
-                char line_buffer[1024];
-                
-                while (fgets(line_buffer, sizeof(line_buffer), f) != NULL) {
-                    std::string line = line_buffer;
-                    // Remove trailing newline
-                    if (!line.empty() && line[line.size()-1] == '\n') {
-                        line.erase(line.size()-1);
-                    }
-                    
-                    // Check for // SS_COMMIT: or #// SS_COMMIT:
-                    size_t pos = line.find("// SS_COMMIT:");
-                    if (pos == std::string::npos) {
-                        pos = line.find("#// SS_COMMIT:");
-                    }
-                    
-                    if (pos != std::string::npos) {
-                        // Extract comment after SS_COMMIT:
-                        std::string comment = line.substr(pos + 13); // 13 = len("// SS_COMMIT:")
-                        
-                        // Trim leading whitespace
-                        size_t first_non_space = comment.find_first_not_of(" \t");
-                        if (first_non_space != std::string::npos) {
-                            comment = comment.substr(first_non_space);
-                            comments.push_back(comment);
-                        }
-                    }
-                }
-                fclose(f);
-                
-                if (!comments.empty()) {
-                    msg += "\n\n - " + files[i] + ":";
-                    for (size_t j = 0; j < comments.size(); ++j) {
-                        msg += "\n   • " + comments[j];
-                    }
-                } else {
-                    msg += "\n - " + files[i];
-                }
-            }
-        }
-        
-        // git commit -m "$msg"
-        std::string command = "git commit -m \"" + msg + "\"";
-        system(command.c_str());
-    } else {
-        std::cout << "Nothing to commit!" << std::endl;
-    }
+	else
+		std::cout << "Nothing to commit!" << std::endl;
 }
 
 int	main(void)
