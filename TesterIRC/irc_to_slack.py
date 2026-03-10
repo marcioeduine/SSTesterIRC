@@ -6,7 +6,7 @@ import time
 import re
 import threading
 
-TOKENS = ["SLACK_TOKEN_REMOVED", "SLACK_TOKEN_REMOVED"]
+TOKENS = ["xoxp-XXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "xoxb-XXXXXXXXXXXXXXXXXXXXXX"]
 
 IDS = ["C0AF7G2KABE", "#ss_irc"]
 
