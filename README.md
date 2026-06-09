@@ -1,5 +1,1 @@
-# All my secret scripts.
-
-### SSHeader
-
-### TesterIRC
+# All My Tester Files for IRC Servers.
